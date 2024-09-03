@@ -254,9 +254,9 @@ def default_setup(cfg, args):
     if fp32_precision != "":
         logger.info(f"Set fp32 precision to {fp32_precision}")
         _set_float32_precision(fp32_precision)
-        logger.info(f"{torch.get_float32_matmul_precision()=}")
-        logger.info(f"{torch.backends.cuda.matmul.allow_tf32=}")
-        logger.info(f"{torch.backends.cudnn.allow_tf32=}")
+        # logger.info(f"{torch.get_float32_matmul_precision()=}")
+        # logger.info(f"{torch.backends.cuda.matmul.allow_tf32=}")
+        # logger.info(f"{torch.backends.cudnn.allow_tf32=}")
 
 
 def default_writers(output_dir: str, max_iter: Optional[int] = None):

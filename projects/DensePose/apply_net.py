@@ -87,22 +87,24 @@ class InferenceAction(Action):
 
     @classmethod
     def execute(cls: type, args: argparse.Namespace):
-        logger.info(f"Loading config from {args.cfg}")
+        # logger.info(f"Loading config from {args.cfg}")
         opts = []
         cfg = cls.setup_config(args.cfg, args.model, args, opts)
-        logger.info(f"Loading model from {args.model}")
+        # logger.info(f"Loading model from {args.model}")
         predictor = DefaultPredictor(cfg)
-        logger.info(f"Loading data from {args.input}")
+        # logger.info(f"Loading data from {args.input}")
         file_list = cls._get_input_file_list(args.input)
         if len(file_list) == 0:
             logger.warning(f"No input images for {args.input}")
             return
         context = cls.create_context(args, cfg)
         for file_name in file_list:
-            img = read_image(file_name, format="BGR")  # predictor expects BGR image.
+            # predictor expects BGR image.
+            img = read_image(file_name, format="BGR")
             with torch.no_grad():
                 outputs = predictor(img)["instances"]
-                cls.execute_on_outputs(context, {"file_name": file_name, "image": img}, outputs)
+                cls.execute_on_outputs(
+                    context, {"file_name": file_name, "image": img}, outputs)
         cls.postexecute(context)
 
     @classmethod
@@ -144,7 +146,8 @@ class DumpAction(InferenceAction):
 
     @classmethod
     def add_parser(cls: type, subparsers: argparse._SubParsersAction):
-        parser = subparsers.add_parser(cls.COMMAND, help="Dump model outputs to a file.")
+        parser = subparsers.add_parser(
+            cls.COMMAND, help="Dump model outputs to a file.")
         cls.add_arguments(parser)
         parser.set_defaults(func=cls.execute)
 
@@ -163,7 +166,7 @@ class DumpAction(InferenceAction):
         cls: type, context: Dict[str, Any], entry: Dict[str, Any], outputs: Instances
     ):
         image_fpath = entry["file_name"]
-        logger.info(f"Processing {image_fpath}")
+        # logger.info(f"Processing {image_fpath}")
         result = {"file_name": image_fpath}
         if outputs.has("scores"):
             result["scores"] = outputs.get("scores").cpu()
@@ -190,7 +193,7 @@ class DumpAction(InferenceAction):
             os.makedirs(out_dir)
         with open(out_fname, "wb") as hFile:
             torch.save(context["results"], hFile)
-            logger.info(f"Output saved to {out_fname}")
+            # logger.info(f"Output saved to {out_fname}")
 
 
 @register_action
@@ -213,7 +216,8 @@ class ShowAction(InferenceAction):
 
     @classmethod
     def add_parser(cls: type, subparsers: argparse._SubParsersAction):
-        parser = subparsers.add_parser(cls.COMMAND, help="Visualize selected entries")
+        parser = subparsers.add_parser(
+            cls.COMMAND, help="Visualize selected entries")
         cls.add_arguments(parser)
         parser.set_defaults(func=cls.execute)
 
@@ -264,7 +268,8 @@ class ShowAction(InferenceAction):
         if args.nms_thresh is not None:
             opts.append("MODEL.ROI_HEADS.NMS_THRESH_TEST")
             opts.append(str(args.nms_thresh))
-        cfg = super(ShowAction, cls).setup_config(config_fpath, model_fpath, args, opts)
+        cfg = super(ShowAction, cls).setup_config(
+            config_fpath, model_fpath, args, opts)
         return cfg
 
     @classmethod
@@ -277,14 +282,16 @@ class ShowAction(InferenceAction):
         visualizer = context["visualizer"]
         extractor = context["extractor"]
         image_fpath = entry["file_name"]
-        logger.info(f"Processing {image_fpath}")
+        # logger.info(f"Processing {image_fpath}")
         image = cv2.cvtColor(entry["image"], cv2.COLOR_BGR2GRAY)
+        image = np.zeros(image.shape, dtype=image.dtype)
         image = np.tile(image[:, :, np.newaxis], [1, 1, 3])
         data = extractor(outputs)
         image_vis = visualizer.visualize(image, data)
         entry_idx = context["entry_idx"] + 1
-        out_fname = cls._get_out_fname(entry_idx, context["out_fname"])
-        out_dir = os.path.dirname(out_fname)
+        out_dir = '../../../output/image-densepose'
+        out_fname = os.path.join(out_dir, os.path.basename(image_fpath))
+        print(out_fname, out_dir)
         if len(out_dir) > 0 and not os.path.exists(out_dir):
             os.makedirs(out_dir)
         cv2.imwrite(out_fname, image_vis)
@@ -307,7 +314,8 @@ class ShowAction(InferenceAction):
         extractors = []
         for vis_spec in vis_specs:
             texture_atlas = get_texture_atlas(args.texture_atlas)
-            texture_atlases_dict = get_texture_atlases(args.texture_atlases_map)
+            texture_atlases_dict = get_texture_atlases(
+                args.texture_atlases_map)
             vis = cls.VISUALIZERS[vis_spec](
                 cfg=cfg,
                 texture_atlas=texture_atlas,
@@ -330,7 +338,8 @@ class ShowAction(InferenceAction):
 def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=DOC,
-        formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=120),
+        formatter_class=lambda prog: argparse.HelpFormatter(
+            prog, max_help_position=120),
     )
     parser.set_defaults(func=lambda _: parser.print_help(sys.stdout))
     subparsers = parser.add_subparsers(title="Actions")

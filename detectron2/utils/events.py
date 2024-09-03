@@ -6,7 +6,7 @@ import os
 import time
 from collections import defaultdict
 from contextlib import contextmanager
-from functools import cached_property
+from functools import lru_cache
 from typing import Optional
 import torch
 from fvcore.common.history_buffer import HistoryBuffer
@@ -155,7 +155,9 @@ class TensorboardXWriter(EventWriter):
         self._writer_args = {"log_dir": log_dir, **kwargs}
         self._last_write = -1
 
-    @cached_property
+    # @cached_property
+    @property
+    @lru_cache()
     def _writer(self):
         from torch.utils.tensorboard import SummaryWriter
 
